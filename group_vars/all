@@ -30,19 +30,19 @@ distros:
   ubuntu-16.04:
     breed: "ubuntu"
     kickstart: "default16.seed"
-    kopts: "netcfg/choose_interface=auto console='ttyS0,115200n8' console=tty0 net.ifnames=0 biosdevname=0 vga=788"
-    kopts_post: "console='ttyS0,115200n8' console=tty0 net.ifnames=0 biosdevname=0 vga=788"
+    kopts: "netcfg/choose_interface=auto console='ttyAMA0,115200n8' console=tty0 net.ifnames=0 biosdevname=0 vga=788"
+    kopts_post: "console='ttyAMA0,115200n8' console=tty0 net.ifnames=0 biosdevname=0 vga=788"
     extra: "--apt-dists=xenial --apt-components=main"
     aliase: "xenial"
     version: "ubuntu"
-    iso_name: ubuntu-16.04-server-amd64
+    iso_name: ubuntu-16.04-server-arm64
     ppa_name: xenial-ocata-ppa
 
   CentOS-7:
     breed: "redhat"
-    kickstart: "default.ks"
+    kickstart: "default-aarch64.ks"
     aliase: "centos7"
     version: "centos"
-    iso_name: CentOS-7-x86_64-Minimal-1611
+    iso_name: CentOS-7-aarch64-Minimal-1611
     ppa_name: centos7-ocata-ppa
 

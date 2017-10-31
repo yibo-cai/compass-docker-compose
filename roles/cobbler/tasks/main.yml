@@ -50,13 +50,13 @@
 
 - name: cobbler import iso
   shell: |
-    name=`basename {{ item.value.iso_name }} | sed -e 's/.iso//g' -e 's/-amd64//g' -e 's/-x86_64//g'`
+    name=`basename {{ item.value.iso_name }} | sed -e 's/.iso//g' -e 's/-arm64//g' -e 's/-aarch64//g'`
     docker exec compass-cobbler bash -c \
     "service cobblerd restart;
      sleep 3;
      cobbler import --name $name \
                     --path /mnt/{{ item.value.iso_name }} \
-                    --arch x86_64 \
+                    --arch arm \
                     --kickstart /var/lib/cobbler/kickstarts/{{ item.value.kickstart }} \
                     --breed {{ item.value.breed }}"
   with_dict: "{{ distros }}"
@@ -72,20 +72,26 @@
     "cobbler repo add --name {{ item.value.ppa_name }} \
                       --mirror /var/lib/cobbler/repo_mirror/{{ item.value.ppa_name }} \
                       --mirror-locally True \
-                      --arch=x86_64 {{ item.value.extra | default()}}"
+                      --arch=arm {{ item.value.extra | default()}}"
   with_dict: "{{ distros }}"
   run_once: True
 
 - name: edit profiles
   shell: |
-    name=`basename {{ item.value.iso_name }} | sed -e 's/.iso//g' -e 's/-amd64//g' -e 's/-x86_64//g'`-x86_64
-    docker exec compass-cobbler bash -c \
-    "cobbler profile edit --name $name \
-                          --name-servers '' \
-                          --repos {{ item.value.ppa_name }} \
-                          --ksmeta \"tree=http://{{ host_ip }}/cobbler/ks_mirror/$name\" \
-                          --kopts \"{{ item.value.kopts | default('') }}\" \
-                          --kopts-post \"{{ item.value.kopts_post | default('') }}\""
+    # Cobbler profile naming is like a shit
+    # - CentOS-7-Minimal-1611-arm-arm
+    # - ubuntu-16.04-server-arm-arm64-arm
+    name=`basename {{ item.value.iso_name }} | sed -e 's/.iso//g' -e 's/-arm64//g' -e 's/-aarch64//g'`-arm
+    profiles=`docker exec compass-cobbler bash -c "cobbler profile list | grep $name"`
+    for profile_name in $profiles; do
+      docker exec compass-cobbler bash -c \
+      "cobbler profile edit --name $profile_name \
+                            --name-servers '' \
+                            --repos {{ item.value.ppa_name }} \
+                            --ksmeta \"tree=http://{{ host_ip }}/cobbler/ks_mirror/${profile_name%????}\" \
+                            --kopts \"{{ item.value.kopts | default('') }}\" \
+                            --kopts-post \"{{ item.value.kopts_post | default('') }}\""
+    done
   with_dict: "{{ distros }}"
   run_once: True
 
